@@ -1,8 +1,11 @@
 package com.blackcall.ui.components
 
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.InfiniteRepeatableSpec
+import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.StartOffset
@@ -41,6 +44,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -49,7 +53,9 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -70,25 +76,41 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.blackcall.ui.theme.Black
 import com.blackcall.ui.theme.BrandGradient
 import com.blackcall.ui.theme.BrandGradientBright
 import com.blackcall.ui.theme.Coral
+import com.blackcall.ui.theme.GlassBorderBottom
+import com.blackcall.ui.theme.GlassBorderTop
+import com.blackcall.ui.theme.GlassBottom
+import com.blackcall.ui.theme.GlassTop
 import com.blackcall.ui.theme.Green
 import com.blackcall.ui.theme.GreenBright
 import com.blackcall.ui.theme.Hairline
+import com.blackcall.ui.theme.LocalBc
+import com.blackcall.ui.theme.LocalReducedMotion
 import com.blackcall.ui.theme.ScreenGradient
+import com.blackcall.ui.theme.Subtle
+import com.blackcall.ui.theme.SubtleMid
+import com.blackcall.ui.theme.SubtleStrong
 import com.blackcall.ui.theme.Surface2
 import com.blackcall.ui.theme.Teal
 import com.blackcall.ui.theme.TealBright
+import com.blackcall.ui.theme.TealDeep
 import com.blackcall.ui.theme.TextPrimary
 import com.blackcall.ui.theme.TextSecondary
 import com.blackcall.ui.theme.TextTertiary
+import com.blackcall.ui.theme.motion
 import kotlinx.coroutines.delay
 
 // ---------------------------------------------------------------------------------------------
@@ -98,6 +120,8 @@ import kotlinx.coroutines.delay
 /** Black → teal-lit gradient canvas with two soft ambient glows. */
 @Composable
 fun GradientScreen(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
+    val glowA = Teal
+    val glowB = Green
     Box(
         modifier
             .fillMaxSize()
@@ -106,14 +130,14 @@ fun GradientScreen(modifier: Modifier = Modifier, content: @Composable BoxScope.
                 val r = size.width * 0.75f
                 drawCircle(
                     brush = Brush.radialGradient(
-                        listOf(Teal.copy(alpha = 0.22f), Teal.copy(alpha = 0f)),
+                        listOf(glowA.copy(alpha = 0.22f), glowA.copy(alpha = 0f)),
                         center = Offset(size.width * 0.9f, size.height * 0.04f), radius = r
                     ),
                     radius = r, center = Offset(size.width * 0.9f, size.height * 0.04f)
                 )
                 drawCircle(
                     brush = Brush.radialGradient(
-                        listOf(Green.copy(alpha = 0.10f), Green.copy(alpha = 0f)),
+                        listOf(glowB.copy(alpha = 0.10f), glowB.copy(alpha = 0f)),
                         center = Offset(size.width * 0.05f, size.height * 0.85f), radius = r
                     ),
                     radius = r, center = Offset(size.width * 0.05f, size.height * 0.85f)
@@ -128,7 +152,7 @@ fun Modifier.pressScale(source: InteractionSource, pressedScale: Float = 0.97f):
     val pressed by source.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (pressed) pressedScale else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        animationSpec = motion(spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)),
         label = "pressScale"
     )
     graphicsLayer { scaleX = scale; scaleY = scale }
@@ -137,10 +161,13 @@ fun Modifier.pressScale(source: InteractionSource, pressedScale: Float = 0.97f):
 /** Fades and lifts content in, [index] * 70ms after first composition. Doesn't shift layout. */
 @Composable
 fun Staggered(index: Int, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    val progress = remember { Animatable(0f) }
+    val reduced = LocalReducedMotion.current
+    val progress = remember { Animatable(if (reduced) 1f else 0f) }
     LaunchedEffect(Unit) {
-        delay(index * 70L)
-        progress.animateTo(1f, tween(520, easing = FastOutSlowInEasing))
+        if (!reduced) {
+            delay(index * 70L)
+            progress.animateTo(1f, tween(520, easing = FastOutSlowInEasing))
+        }
     }
     Box(
         modifier.graphicsLayer {
@@ -167,8 +194,8 @@ fun GlassCard(
     if (onClick != null) m = m.pressScale(source)
     m = m
         .clip(shape)
-        .background(Brush.verticalGradient(listOf(Color(0x1AFFFFFF), Color(0x08FFFFFF))))
-        .border(1.dp, Brush.verticalGradient(listOf(Color(0x33FFFFFF), Color(0x0DFFFFFF))), shape)
+        .background(Brush.verticalGradient(listOf(GlassTop, GlassBottom)))
+        .border(1.dp, Brush.verticalGradient(listOf(GlassBorderTop, GlassBorderBottom)), shape)
     if (onClick != null) {
         m = m.clickable(interactionSource = source, indication = null, role = Role.Button, onClick = onClick)
     }
@@ -246,7 +273,7 @@ fun AnimatedCounter(
     // Starts at 0 so numbers count up on first display, then tween between later values.
     var target by remember { mutableIntStateOf(0) }
     LaunchedEffect(value) { target = value }
-    val shown by animateIntAsState(target, tween(900, easing = FastOutSlowInEasing), label = "counter")
+    val shown by animateIntAsState(target, motion(tween(900, easing = FastOutSlowInEasing)), label = "counter")
     Text(shown.toString(), modifier, style = style, color = color)
 }
 
@@ -277,21 +304,28 @@ fun SectionHeader(title: String, modifier: Modifier = Modifier, trailing: @Compo
 @Composable
 fun ShieldHero(active: Boolean, modifier: Modifier = Modifier) {
     val infinite = rememberInfiniteTransition(label = "hero")
-    val pulseA by infinite.animateFloat(
-        0f, 1f, infiniteRepeatable(tween(2800, easing = LinearEasing)), label = "pulseA"
+    val reduced = LocalReducedMotion.current
+    val pulseA by infinite.loop(
+        reduced, 1f, 0f, 1f, infiniteRepeatable(tween(2800, easing = LinearEasing)), "pulseA"
     )
-    val pulseB by infinite.animateFloat(
-        0f, 1f,
+    val pulseB by infinite.loop(
+        reduced, 1f, 0f, 1f,
         infiniteRepeatable(tween(2800, easing = LinearEasing), initialStartOffset = StartOffset(1400)),
-        label = "pulseB"
+        "pulseB"
     )
-    val spin by infinite.animateFloat(
-        0f, 360f, infiniteRepeatable(tween(9000, easing = LinearEasing)), label = "spin"
+    val spin by infinite.loop(
+        reduced, 0f, 0f, 360f, infiniteRepeatable(tween(9000, easing = LinearEasing)), "spin"
     )
-    val bob by infinite.animateFloat(
-        -5f, 5f, infiniteRepeatable(tween(2400, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "bob"
+    val bob by infinite.loop(
+        reduced, 0f, -5f, 5f, infiniteRepeatable(tween(2400, easing = FastOutSlowInEasing), RepeatMode.Reverse), "bob"
     )
-    val on by animateFloatAsState(if (active) 1f else 0f, tween(700), label = "heroOn")
+    val on by animateFloatAsState(if (active) 1f else 0f, motion(tween(700)), label = "heroOn")
+
+    // Theme colours are read here: the draw lambda below isn't composable.
+    val teal = Teal
+    val tealBright = TealBright
+    val green = Green
+    val ringColor = SubtleMid
 
     Box(modifier.size(264.dp), contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
@@ -300,7 +334,7 @@ fun ShieldHero(active: Boolean, modifier: Modifier = Modifier) {
 
             listOf(pulseA, pulseB).forEach { p ->
                 drawCircle(
-                    color = TealBright.copy(alpha = (1f - p) * 0.38f * on),
+                    color = tealBright.copy(alpha = (1f - p) * 0.38f * on),
                     radius = base * (0.5f + 0.5f * p),
                     center = c,
                     style = Stroke(width = 2.dp.toPx())
@@ -308,7 +342,7 @@ fun ShieldHero(active: Boolean, modifier: Modifier = Modifier) {
             }
             drawCircle(
                 brush = Brush.radialGradient(
-                    listOf(Teal.copy(alpha = 0.10f + 0.30f * on), Teal.copy(alpha = 0f)),
+                    listOf(teal.copy(alpha = 0.10f + 0.30f * on), teal.copy(alpha = 0f)),
                     center = c, radius = base * 0.95f
                 ),
                 radius = base * 0.95f, center = c
@@ -317,7 +351,7 @@ fun ShieldHero(active: Boolean, modifier: Modifier = Modifier) {
             rotate(spin, pivot = c) {
                 drawArc(
                     brush = Brush.sweepGradient(
-                        listOf(Teal.copy(alpha = 0f), Teal, Green, Green.copy(alpha = 0f)), center = c
+                        listOf(teal.copy(alpha = 0f), teal, green, green.copy(alpha = 0f)), center = c
                     ),
                     startAngle = 0f, sweepAngle = 360f, useCenter = false,
                     topLeft = Offset(c.x - ringR, c.y - ringR),
@@ -327,7 +361,7 @@ fun ShieldHero(active: Boolean, modifier: Modifier = Modifier) {
                 )
             }
             drawCircle(
-                color = Color(0x1AFFFFFF), radius = ringR, center = c,
+                color = ringColor, radius = ringR, center = c,
                 style = Stroke(width = 1.dp.toPx())
             )
         }
@@ -341,7 +375,7 @@ fun ShieldHero(active: Boolean, modifier: Modifier = Modifier) {
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                Icons.Rounded.Shield,
+                painter = painterResource(if (active) com.blackcall.R.drawable.shield_svgrepo_com else com.blackcall.R.drawable.shield_svgrepo_com__1_),
                 contentDescription = if (active) "Protection active" else "Protection paused",
                 tint = lerp(TextTertiary, Black, on),
                 modifier = Modifier.size(60.dp)
@@ -353,6 +387,14 @@ fun ShieldHero(active: Boolean, modifier: Modifier = Modifier) {
 // ---------------------------------------------------------------------------------------------
 // Rows & controls
 // ---------------------------------------------------------------------------------------------
+
+/** A looping animation that holds still at [rest] when reduced motion is on. */
+@Composable
+private fun InfiniteTransition.loop(
+    reduced: Boolean, rest: Float, from: Float, to: Float,
+    spec: InfiniteRepeatableSpec<Float>, label: String
+): State<Float> =
+    if (reduced) remember { mutableFloatStateOf(rest) } else animateFloat(from, to, spec, label)
 
 @Composable
 fun IconBadge(icon: ImageVector, modifier: Modifier = Modifier, tint: Color = TealBright) {
@@ -369,19 +411,20 @@ fun IconBadge(icon: ImageVector, modifier: Modifier = Modifier, tint: Color = Te
 
 @Composable
 fun BlackCallSwitch(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, enabled: Boolean = true) {
+    val dark = LocalBc.current.isDark
     Switch(
         checked = checked,
         onCheckedChange = onCheckedChange,
         enabled = enabled,
         colors = SwitchDefaults.colors(
-            checkedThumbColor = Black,
-            checkedTrackColor = TealBright,
-            checkedBorderColor = TealBright,
+            checkedThumbColor = if (dark) Black else Color.White,
+            checkedTrackColor = if (dark) TealBright else Teal,
+            checkedBorderColor = if (dark) TealBright else Color.Transparent,
             uncheckedThumbColor = TextSecondary,
-            uncheckedTrackColor = Surface2,
-            uncheckedBorderColor = Hairline,
+            uncheckedTrackColor = if (dark) Surface2 else Subtle,
+            uncheckedBorderColor = if (dark) Hairline else SubtleStrong,
             disabledCheckedTrackColor = Teal.copy(alpha = 0.4f),
-            disabledUncheckedTrackColor = Surface2.copy(alpha = 0.5f)
+            disabledUncheckedTrackColor = if (dark) Surface2.copy(alpha = 0.5f) else Subtle
         )
     )
 }
@@ -406,7 +449,7 @@ fun SettingSwitchRow(
     ) {
         IconBadge(icon)
         Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, color = TextPrimary)
+            Text(title, style = MaterialTheme.typography.titleSmall, color = if (enabled) TextPrimary else TextTertiary)
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
         }
         BlackCallSwitch(checked, null, enabled)
@@ -425,13 +468,13 @@ fun <T> SegmentedControl(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(Color(0x14FFFFFF))
+            .background(Subtle)
             .padding(4.dp)
     ) {
         options.forEach { option ->
             val isSelected = option == selected
-            val text by animateColorAsState(if (isSelected) Black else TextSecondary, tween(250), label = "segText")
-            val fill by animateFloatAsState(if (isSelected) 1f else 0f, tween(280), label = "segFill")
+            val text by animateColorAsState(if (isSelected) Black else TextSecondary, motion(tween(250)), label = "segText")
+            val fill by animateFloatAsState(if (isSelected) 1f else 0f, motion(tween(280)), label = "segFill")
             Box(
                 Modifier
                     .weight(1f)
@@ -455,16 +498,17 @@ fun <T> SegmentedControl(
 @Composable
 fun WeekBarChart(values: List<Int>, labels: List<String>, modifier: Modifier = Modifier) {
     val max = (values.maxOrNull() ?: 0).coerceAtLeast(1)
+    val reduced = LocalReducedMotion.current
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         values.forEachIndexed { i, v ->
             var grown by remember { mutableStateOf(false) }
             LaunchedEffect(v) {
-                delay(i * 70L)
+                if (!reduced) delay(i * 70L)
                 grown = true
             }
             val fraction by animateFloatAsState(
                 if (grown) v / max.toFloat() else 0f,
-                tween(750, easing = FastOutSlowInEasing), label = "bar$i"
+                motion(tween(750, easing = FastOutSlowInEasing)), label = "bar$i"
             )
             val isToday = i == values.lastIndex
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -481,9 +525,9 @@ fun WeekBarChart(values: List<Int>, labels: List<String>, modifier: Modifier = M
                             .fillMaxHeight(fraction.coerceAtLeast(0.05f))
                             .clip(RoundedCornerShape(7.dp))
                             .background(
-                                if (v == 0) Brush.verticalGradient(listOf(Color(0x26FFFFFF), Color(0x26FFFFFF)))
+                                if (v == 0) Brush.verticalGradient(listOf(SubtleStrong, SubtleStrong))
                                 else if (isToday) Brush.verticalGradient(listOf(GreenBright, TealBright))
-                                else Brush.verticalGradient(listOf(Teal.copy(alpha = 0.75f), TealDeepFade))
+                                else Brush.verticalGradient(listOf(Teal.copy(alpha = 0.75f), TealDeep.copy(alpha = 0.6f)))
                             )
                     )
                 }
@@ -498,10 +542,13 @@ fun WeekBarChart(values: List<Int>, labels: List<String>, modifier: Modifier = M
     }
 }
 
-private val TealDeepFade = Color(0x990F766E)
-
 @Composable
-fun EmptyState(icon: ImageVector, title: String, subtitle: String, modifier: Modifier = Modifier) {
+fun EmptyState(
+    @DrawableRes icon: Int,
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier
+) {
     val infinite = rememberInfiniteTransition(label = "empty")
     val bob by infinite.animateFloat(
         -6f, 6f, infiniteRepeatable(tween(2200, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "emptyBob"
@@ -518,7 +565,12 @@ fun EmptyState(icon: ImageVector, title: String, subtitle: String, modifier: Mod
                 .background(Brush.radialGradient(listOf(Teal.copy(alpha = 0.30f), Teal.copy(alpha = 0.04f)))),
             contentAlignment = Alignment.Center
         ) {
-            Icon(icon, null, tint = TealBright, modifier = Modifier.size(40.dp))
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = TealBright,
+                modifier = Modifier.size(40.dp)
+            )
         }
         Spacer(Modifier.height(16.dp))
         Text(title, style = MaterialTheme.typography.titleMedium, color = TextPrimary)
@@ -547,3 +599,35 @@ fun Pill(text: String, modifier: Modifier = Modifier, color: Color = TealBright)
 }
 
 val DestructiveColor = Coral
+
+// ---------------------------------------------------------------------------------------------
+// Profile avatar
+// ---------------------------------------------------------------------------------------------
+
+/** Circular brand-gradient avatar showing [initials], or a person icon when there are none. */
+@Composable
+fun Avatar(
+    initials: String,
+    size: Dp,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    contentDescription: String = "Profile"
+) {
+    val source = remember { MutableInteractionSource() }
+    var m = modifier.size(size)
+    if (onClick != null) m = m.pressScale(source).semantics { this.contentDescription = contentDescription }
+    m = m.clip(CircleShape).background(BrandGradient)
+    if (onClick != null) {
+        m = m.clickable(interactionSource = source, indication = null, role = Role.Button, onClick = onClick)
+    }
+    Box(m, contentAlignment = Alignment.Center) {
+        if (initials.isEmpty()) {
+            Icon(Icons.Rounded.Person, null, tint = Black, modifier = Modifier.size(size * 0.52f))
+        } else {
+            Text(
+                initials, color = Black,
+                style = MaterialTheme.typography.titleMedium.copy(fontSize = (size.value * 0.38f).sp, fontWeight = FontWeight.Bold)
+            )
+        }
+    }
+}

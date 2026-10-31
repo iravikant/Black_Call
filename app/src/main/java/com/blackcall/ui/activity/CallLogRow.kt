@@ -40,8 +40,10 @@ import com.blackcall.ui.components.Pill
 import com.blackcall.ui.icon
 import com.blackcall.ui.theme.BrandGradient
 import com.blackcall.ui.theme.GreenBright
+import com.blackcall.ui.theme.Hairline
 import com.blackcall.ui.theme.TextPrimary
 import com.blackcall.ui.theme.TextSecondary
+import com.blackcall.ui.theme.motion
 
 /** One blocked call. Collapsed by default; when [expanded] it shows why, and any [actions]. */
 @Composable
@@ -102,12 +104,12 @@ fun CallLogRow(
 private fun ScoreBar(score: Int) {
     var target by remember { mutableFloatStateOf(0f) }
     LaunchedEffect(score) { target = score / 100f }
-    val fraction by animateFloatAsState(target, tween(700, easing = FastOutSlowInEasing), label = "score")
+    val fraction by animateFloatAsState(target, motion(tween(700, easing = FastOutSlowInEasing)), label = "score")
     Column {
         Text("Spam score  $score / 100", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
         Spacer(Modifier.height(6.dp))
         Box(
-            Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50)).background(Color(0x1FFFFFFF))
+            Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50)).background(Hairline)
         ) {
             Box(
                 Modifier

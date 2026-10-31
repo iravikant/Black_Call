@@ -1,6 +1,8 @@
 package com.blackcall.ui.home
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -35,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.blackcall.R
 import com.blackcall.domain.FilterSettings
 import com.blackcall.permissions.AppPermission
 import com.blackcall.permissions.Importance
@@ -44,6 +47,7 @@ import com.blackcall.permissions.PermissionStatus
 import com.blackcall.ui.activity.CallLogRow
 import com.blackcall.ui.appViewModel
 import com.blackcall.ui.components.AnimatedCounter
+import com.blackcall.ui.components.Avatar
 import com.blackcall.ui.components.EmptyState
 import com.blackcall.ui.components.GhostButton
 import com.blackcall.ui.components.GlassCard
@@ -55,6 +59,7 @@ import com.blackcall.ui.components.ShieldHero
 import com.blackcall.ui.components.Staggered
 import com.blackcall.ui.components.WeekBarChart
 import com.blackcall.ui.theme.Coral
+import com.blackcall.ui.theme.LocalReducedMotion
 import com.blackcall.ui.theme.TealBright
 import com.blackcall.ui.theme.TextPrimary
 import com.blackcall.ui.theme.TextSecondary
@@ -64,11 +69,13 @@ fun HomeScreen(
     permissions: PermissionController,
     contentPadding: PaddingValues,
     onSeeAllActivity: () -> Unit,
+    onOpenProfile: () -> Unit,
     vm: HomeViewModel = appViewModel { HomeViewModel(it.repository) }
 ) {
     val ui by vm.state.collectAsStateWithLifecycle()
     val s = ui.settings
     val pending = pendingPermission(permissions, s)
+    val reduced = LocalReducedMotion.current
 
     LazyColumn(
         contentPadding = PaddingValues(
@@ -80,13 +87,17 @@ fun HomeScreen(
     ) {
         item {
             Staggered(0) {
-                Column {
-                    GradientText("Black Call", MaterialTheme.typography.headlineLarge)
-                    Text(
-                        "Your calls, on your terms.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        GradientText("Black Call", MaterialTheme.typography.headlineLarge)
+                        Text(
+                            if (ui.profile.name.isBlank()) "Your calls, on your terms."
+                            else "Hi, ${ui.profile.name.trim().substringBefore(' ')}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSecondary
+                        )
+                    }
+                    Avatar(ui.profile.initials(), 44.dp, onClick = onOpenProfile)
                 }
             }
         }
@@ -104,7 +115,8 @@ fun HomeScreen(
                     AnimatedContent(
                         targetState = s.protectionEnabled,
                         transitionSpec = {
-                            (fadeIn(tween(350)) + slideInVertically(tween(350)) { it / 4 }) togetherWith fadeOut(tween(150))
+                            if (reduced) EnterTransition.None togetherWith ExitTransition.None
+                            else (fadeIn(tween(350)) + slideInVertically(tween(350)) { it / 4 }) togetherWith fadeOut(tween(150))
                         },
                         label = "statusText"
                     ) { on ->
@@ -126,7 +138,10 @@ fun HomeScreen(
                     Spacer(Modifier.height(18.dp))
                     AnimatedContent(
                         targetState = s.protectionEnabled,
-                        transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(150)) },
+                        transitionSpec = {
+                            if (reduced) EnterTransition.None togetherWith ExitTransition.None
+                            else fadeIn(tween(300)) togetherWith fadeOut(tween(150))
+                        },
                         label = "toggleButton"
                     ) { on ->
                         if (on) {
@@ -200,7 +215,7 @@ fun HomeScreen(
         if (ui.recent.isEmpty()) {
             item {
                 EmptyState(
-                    icon = Icons.Rounded.Shield,
+                    icon = R.drawable.shield_svgrepo_com,
                     title = "All quiet",
                     subtitle = "Blocked calls will show up here."
                 )

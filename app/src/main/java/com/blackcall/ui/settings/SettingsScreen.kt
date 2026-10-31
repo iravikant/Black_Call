@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.GppBad
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Report
@@ -25,6 +26,7 @@ import androidx.compose.material.icons.rounded.Contacts
 import androidx.compose.material.icons.rounded.Phone
 import androidx.compose.material.icons.rounded.PersonOff
 import androidx.compose.material.icons.rounded.VisibilityOff
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,6 +50,7 @@ import com.blackcall.permissions.PermissionController
 import com.blackcall.ui.Format
 import com.blackcall.ui.LocalSnackbar
 import com.blackcall.ui.appViewModel
+import com.blackcall.ui.components.Avatar
 import com.blackcall.ui.components.GhostButton
 import com.blackcall.ui.components.GlassCard
 import com.blackcall.ui.components.GradientButton
@@ -73,9 +76,11 @@ import java.io.File
 fun SettingsScreen(
     permissions: PermissionController,
     contentPadding: PaddingValues,
+    onOpenProfile: () -> Unit,
     vm: SettingsViewModel = appViewModel { SettingsViewModel(it.repository) }
 ) {
     val s by vm.settings.collectAsStateWithLifecycle()
+    val profile by vm.profile.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbar = LocalSnackbar.current
@@ -139,6 +144,27 @@ fun SettingsScreen(
 
         item {
             Staggered(1) {
+                GlassCard(Modifier.fillMaxWidth(), onClick = onOpenProfile) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Avatar(profile.initials(), 48.dp)
+                        Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
+                            Text(
+                                profile.name.ifBlank { "Set up your profile" },
+                                style = MaterialTheme.typography.titleSmall, color = TextPrimary
+                            )
+                            Text(
+                                "Name, theme, accent colour and motion",
+                                style = MaterialTheme.typography.bodySmall, color = TextSecondary
+                            )
+                        }
+                        Icon(Icons.Rounded.ChevronRight, null, tint = TextSecondary)
+                    }
+                }
+            }
+        }
+
+        item {
+            Staggered(2) {
                 GlassCard(Modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp, 8.dp)) {
                     SectionHeader("Filters")
                     SettingSwitchRow(Icons.Rounded.Report, "Spam detection", "Score numbers for spam patterns",
@@ -170,7 +196,7 @@ fun SettingsScreen(
         }
 
         item {
-            Staggered(2) {
+            Staggered(3) {
                 GlassCard(Modifier.fillMaxWidth().animateContentSize()) {
                     SectionHeader("When a call is blocked")
                     SegmentedControl(BlockAction.entries, s.action, { it.label }, { v -> vm.update { it.copy(action = v) } })
@@ -187,7 +213,7 @@ fun SettingsScreen(
         }
 
         item {
-            Staggered(3) {
+            Staggered(4) {
                 GlassCard(Modifier.fillMaxWidth().animateContentSize()) {
                     SettingSwitchRow(Icons.Rounded.Bedtime, "Quiet hours", "Only contacts and allowed numbers ring during this window",
                         s.quietHoursEnabled, { v -> vm.update { it.copy(quietHoursEnabled = v) } })
@@ -202,7 +228,7 @@ fun SettingsScreen(
         }
 
         item {
-            Staggered(4) {
+            Staggered(5) {
                 GlassCard(Modifier.fillMaxWidth()) {
                     SectionHeader("Permissions")
                     permissions.statuses.forEach { st ->
@@ -215,7 +241,7 @@ fun SettingsScreen(
         }
 
         item {
-            Staggered(5) {
+            Staggered(6) {
                 GlassCard(Modifier.fillMaxWidth()) {
                     SectionHeader("Backup")
                     Text(
@@ -232,7 +258,7 @@ fun SettingsScreen(
         }
 
         item {
-            Staggered(6) {
+            Staggered(7) {
                 GlassCard(Modifier.fillMaxWidth()) {
                     SectionHeader("Privacy")
                     Text(
@@ -240,7 +266,7 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodySmall, color = TextSecondary
                     )
                     Text(
-                        "Version 2.0",
+                        "Version 1.0",
                         style = MaterialTheme.typography.labelMedium, color = TextSecondary,
                         modifier = Modifier.padding(top = 12.dp)
                     )

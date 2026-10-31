@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import com.blackcall.ui.theme.Black
 import com.blackcall.ui.theme.Coral
 import com.blackcall.ui.theme.Hairline
+import com.blackcall.ui.theme.SubtleLow
+import com.blackcall.ui.theme.SubtleMid
 import com.blackcall.ui.theme.Surface1
 import com.blackcall.ui.theme.Surface2
 import com.blackcall.ui.theme.Teal
@@ -86,8 +88,8 @@ fun SearchField(
         leadingIcon = leading,
         shape = RoundedCornerShape(16.dp),
         colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color(0x1AFFFFFF),
-            unfocusedContainerColor = Color(0x12FFFFFF),
+            focusedContainerColor = SubtleMid,
+            unfocusedContainerColor = SubtleLow,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
             focusedTextColor = TextPrimary,

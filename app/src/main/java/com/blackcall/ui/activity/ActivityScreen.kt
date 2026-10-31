@@ -36,6 +36,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.blackcall.R
 import com.blackcall.data.db.CallLogEntry
 import com.blackcall.ui.Format
 import com.blackcall.ui.LocalSnackbar
@@ -49,6 +50,7 @@ import com.blackcall.ui.components.GradientText
 import com.blackcall.ui.components.Staggered
 import com.blackcall.ui.theme.Black
 import com.blackcall.ui.theme.BrandGradient
+import com.blackcall.ui.theme.SubtleMid
 import com.blackcall.ui.theme.TextSecondary
 import kotlinx.coroutines.launch
 
@@ -112,7 +114,7 @@ fun ActivityScreen(
         if (entries.isEmpty()) {
             item {
                 EmptyState(
-                    Icons.Rounded.History,
+                    R.drawable.origin_svgrepo_com,
                     if (total == 0) "Nothing blocked yet" else "No matches",
                     if (total == 0) "When Black Call stops a call, you'll see exactly why."
                     else "Try another filter."
@@ -186,7 +188,7 @@ private fun FilterPill(text: String, selected: Boolean, onClick: () -> Unit) {
     Row(
         Modifier
             .clip(RoundedCornerShape(50))
-            .background(if (selected) BrandGradient else androidx.compose.ui.graphics.SolidColor(androidx.compose.ui.graphics.Color(0x1AFFFFFF)))
+            .background(if (selected) BrandGradient else androidx.compose.ui.graphics.SolidColor(SubtleMid))
             .clickable(role = Role.Tab, onClick = onClick)
             .padding(horizontal = 18.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically

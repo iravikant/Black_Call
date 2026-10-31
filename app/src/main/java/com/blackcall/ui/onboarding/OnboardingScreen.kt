@@ -1,6 +1,8 @@
 package com.blackcall.ui.onboarding
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -56,9 +58,12 @@ import com.blackcall.ui.components.ShieldHero
 import com.blackcall.ui.components.Staggered
 import com.blackcall.ui.theme.Black
 import com.blackcall.ui.theme.BrandGradient
+import com.blackcall.ui.theme.GlassBorderTop
+import com.blackcall.ui.theme.LocalReducedMotion
 import com.blackcall.ui.theme.TealBright
 import com.blackcall.ui.theme.TextPrimary
 import com.blackcall.ui.theme.TextSecondary
+import com.blackcall.ui.theme.motion
 import kotlinx.coroutines.delay
 
 /** null = the welcome page; otherwise a permission step. */
@@ -86,10 +91,12 @@ fun OnboardingScreen(permissions: PermissionController, onFinish: () -> Unit) {
             Dots(count = pages.size, current = step)
 
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                val reduced = LocalReducedMotion.current
                 AnimatedContent(
                     targetState = step,
                     transitionSpec = {
-                        (slideInHorizontally(tween(380)) { it / 3 } + fadeIn(tween(380))) togetherWith
+                        if (reduced) EnterTransition.None togetherWith ExitTransition.None
+                        else (slideInHorizontally(tween(380)) { it / 3 } + fadeIn(tween(380))) togetherWith
                             (slideOutHorizontally(tween(260)) { -it / 3 } + fadeOut(tween(200)))
                     },
                     label = "onboardingPage"
@@ -195,9 +202,9 @@ private fun PermissionPage(permission: AppPermission) {
 private fun Dots(count: Int, current: Int) {
     Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         repeat(count) { i ->
-            val width by animateDpAsState(if (i == current) 26.dp else 8.dp, tween(300), label = "dotW")
+            val width by animateDpAsState(if (i == current) 26.dp else 8.dp, motion(tween(300)), label = "dotW")
             val color by animateColorAsState(
-                if (i <= current) TealBright else androidx.compose.ui.graphics.Color(0x33FFFFFF), label = "dotC"
+                if (i <= current) TealBright else GlassBorderTop, label = "dotC"
             )
             Box(Modifier.height(8.dp).size(width, 8.dp).clip(RoundedCornerShape(50)).background(color))
         }

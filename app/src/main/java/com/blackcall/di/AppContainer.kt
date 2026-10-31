@@ -21,6 +21,12 @@ class AppContainer(context: Context) {
 
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
+    /** When the app was first installed; the profile screen shows "protecting you for N days". */
+    @Suppress("DEPRECATION")
+    val installTime: Long = runCatching {
+        appContext.packageManager.getPackageInfo(appContext.packageName, 0).firstInstallTime
+    }.getOrDefault(System.currentTimeMillis())
+
     val settingsStore = SettingsStore(appContext)
     val repository = BlackCallRepository(BlackCallDatabase.create(appContext), settingsStore)
     val contacts = ContactsLookup(appContext)

@@ -10,9 +10,13 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.blackcall.domain.AccentId
+import com.blackcall.domain.Appearance
 import com.blackcall.domain.BlockAction
 import com.blackcall.domain.FilterSettings
+import com.blackcall.domain.Profile
 import com.blackcall.domain.Sensitivity
+import com.blackcall.domain.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -45,6 +49,11 @@ class SettingsStore(context: Context) {
         val notify = booleanPreferencesKey("notify_on_block")
         val onboardingDone = booleanPreferencesKey("onboarding_done")
         val asked = stringSetPreferencesKey("asked_permissions")
+        val themeMode = stringPreferencesKey("theme_mode")
+        val amoled = booleanPreferencesKey("amoled")
+        val accent = stringPreferencesKey("accent")
+        val reduceMotion = booleanPreferencesKey("reduce_motion")
+        val profileName = stringPreferencesKey("profile_name")
     }
 
     private val data: Flow<Preferences> = store.data.catch { e ->
@@ -58,6 +67,39 @@ class SettingsStore(context: Context) {
             onboardingDone = it[K.onboardingDone] ?: false,
             askedPermissions = it[K.asked] ?: emptySet()
         )
+    }
+
+    val appearance: Flow<Appearance> = data.map {
+        val d = Appearance()
+        Appearance(
+            mode = it[K.themeMode]?.let { v -> runCatching { ThemeMode.valueOf(v) }.getOrNull() } ?: d.mode,
+            amoled = it[K.amoled] ?: d.amoled,
+            accent = it[K.accent]?.let { v -> runCatching { AccentId.valueOf(v) }.getOrNull() } ?: d.accent,
+            reduceMotion = it[K.reduceMotion] ?: d.reduceMotion
+        )
+    }
+
+    val profile: Flow<Profile> = data.map { Profile(it[K.profileName].orEmpty()) }
+
+    suspend fun updateAppearance(transform: (Appearance) -> Appearance) {
+        store.edit { prefs ->
+            val d = Appearance()
+            val current = Appearance(
+                mode = prefs[K.themeMode]?.let { v -> runCatching { ThemeMode.valueOf(v) }.getOrNull() } ?: d.mode,
+                amoled = prefs[K.amoled] ?: d.amoled,
+                accent = prefs[K.accent]?.let { v -> runCatching { AccentId.valueOf(v) }.getOrNull() } ?: d.accent,
+                reduceMotion = prefs[K.reduceMotion] ?: d.reduceMotion
+            )
+            val a = transform(current)
+            prefs[K.themeMode] = a.mode.name
+            prefs[K.amoled] = a.amoled
+            prefs[K.accent] = a.accent.name
+            prefs[K.reduceMotion] = a.reduceMotion
+        }
+    }
+
+    suspend fun setProfileName(name: String) {
+        store.edit { it[K.profileName] = name.trim().take(Profile.MAX_NAME) }
     }
 
     suspend fun update(transform: (FilterSettings) -> FilterSettings) {

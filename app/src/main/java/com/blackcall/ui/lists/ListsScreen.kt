@@ -49,6 +49,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.blackcall.R
 import com.blackcall.data.db.NumberRule
 import com.blackcall.data.db.PrefixRule
 import com.blackcall.domain.PhoneNumbers
@@ -84,7 +85,11 @@ fun ListsScreen(
     fun undoSnack(message: String, onUndo: () -> Unit) {
         scope.launch {
             snackbar.currentSnackbarData?.dismiss()
-            val r = snackbar.showSnackbar(message, actionLabel = "Undo", duration = SnackbarDuration.Short)
+            val r = snackbar.showSnackbar(
+                message,
+                actionLabel = "Undo",
+                duration = SnackbarDuration.Short
+            )
             if (r == SnackbarResult.ActionPerformed) onUndo()
         }
     }
@@ -132,6 +137,7 @@ fun ListsScreen(
                         undoSnack("Removed ${PhoneNumbers.display(r.number)}") { vm.restore(r) }
                     }
                 )
+
                 ListTab.ALLOWED -> numberItems(
                     rules = ui.allowed, icon = Icons.Rounded.VerifiedUser,
                     emptyIcon = Icons.Rounded.VerifiedUser, emptyTitle = "No allowed numbers",
@@ -142,11 +148,12 @@ fun ListsScreen(
                         undoSnack("Removed ${PhoneNumbers.display(r.number)}") { vm.restore(r) }
                     }
                 )
+
                 ListTab.PREFIXES -> {
                     if (ui.prefixes.isEmpty()) {
                         item {
                             EmptyState(
-                                Icons.Rounded.Dialpad,
+                                R.drawable.block_svgrepo_com,
                                 if (query.isBlank()) "No prefix rules" else "No matches",
                                 "Block whole number ranges, like telemarketing series (140) or a country code (+92)."
                             )
@@ -160,7 +167,12 @@ fun ListsScreen(
                                 },
                                 modifier = Modifier.animateItem()
                             ) {
-                                RuleRow(Icons.Rounded.Dialpad, p.prefix + "…", p.label.ifBlank { "Prefix rule" }, p.createdAt) {
+                                RuleRow(
+                                    Icons.Rounded.Dialpad,
+                                    p.prefix + "…",
+                                    p.label.ifBlank { "Prefix rule" },
+                                    p.createdAt
+                                ) {
                                     vm.remove(p)
                                     undoSnack("Removed prefix ${p.prefix}") { vm.restore(p) }
                                 }
@@ -203,13 +215,22 @@ private fun androidx.compose.foundation.lazy.LazyListScope.numberItems(
 ) {
     if (rules.isEmpty()) {
         item {
-            EmptyState(emptyIcon, if (searching) "No matches" else emptyTitle, if (searching) "Try a different search." else emptySub)
+            EmptyState(
+                R.drawable.block_svgrepo_com,
+                if (searching) "No matches" else emptyTitle,
+                if (searching) "Try a different search." else emptySub
+            )
         }
         return
     }
     items(rules, key = { it.normalized }) { r ->
         SwipeRow(onDelete = { onRemove(r) }, modifier = Modifier.animateItem()) {
-            RuleRow(icon, PhoneNumbers.display(r.number), r.label.ifBlank { "Added ${Format.day(r.createdAt)}" }, r.createdAt) {
+            RuleRow(
+                icon,
+                PhoneNumbers.display(r.number),
+                r.label.ifBlank { "Added ${Format.day(r.createdAt)}" },
+                r.createdAt
+            ) {
                 onRemove(r)
             }
         }
@@ -225,7 +246,9 @@ private fun SwipeRow(
 ) {
     val state = rememberSwipeToDismissBoxState(
         confirmValueChange = {
-            if (it == SwipeToDismissBoxValue.EndToStart) { onDelete(); true } else false
+            if (it == SwipeToDismissBoxValue.EndToStart) {
+                onDelete(); true
+            } else false
         }
     )
     SwipeToDismissBox(
@@ -256,15 +279,25 @@ private fun RuleRow(
     @Suppress("UNUSED_PARAMETER") createdAt: Long,
     onDelete: () -> Unit
 ) {
-    GlassCard(Modifier.fillMaxWidth(), contentPadding = PaddingValues(start = 14.dp, top = 10.dp, bottom = 10.dp, end = 6.dp)) {
+    GlassCard(
+        Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(start = 14.dp, top = 10.dp, bottom = 10.dp, end = 6.dp)
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconBadge(icon)
-            Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+            Column(Modifier
+                .weight(1f)
+                .padding(horizontal = 12.dp)) {
                 Text(title, style = MaterialTheme.typography.titleSmall, color = TextPrimary)
                 Text(subtitle, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Rounded.Delete, contentDescription = "Remove", tint = TextSecondary, modifier = Modifier.size(20.dp))
+                Icon(
+                    Icons.Rounded.Delete,
+                    contentDescription = "Remove",
+                    tint = TextSecondary,
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
     }

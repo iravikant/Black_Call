@@ -26,6 +26,8 @@ class BlackCallRepository(
     private val logDao = db.callLogDao()
 
     val settings: Flow<FilterSettings> = settingsStore.settings
+    val appearance = settingsStore.appearance
+    val profile = settingsStore.profile
     val blockedRules: Flow<List<NumberRule>> = rules.observe(RuleType.BLOCK)
     val allowedRules: Flow<List<NumberRule>> = rules.observe(RuleType.ALLOW)
     val prefixRules: Flow<List<PrefixRule>> = prefixDao.observeAll()

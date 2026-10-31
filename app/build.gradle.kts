@@ -14,8 +14,8 @@ android {
         // CallScreeningService + RoleManager (ROLE_CALL_SCREENING) need API 29+
         minSdk = 29
         targetSdk = 36
-        versionCode = 2
-        versionName = "2.0"
+        versionCode = 1
+        versionName = "1.0"
     }
 
     buildTypes {

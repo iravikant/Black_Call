@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.blackcall.data.BlackCallRepository
 import com.blackcall.data.db.CallLogEntry
 import com.blackcall.domain.FilterSettings
+import com.blackcall.domain.Profile
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -24,12 +25,13 @@ data class HomeUiState(
     /** Oldest first; the last entry is today. */
     val last7: List<Int> = List(7) { 0 },
     val dayLabels: List<String> = List(7) { "" },
-    val recent: List<CallLogEntry> = emptyList()
+    val recent: List<CallLogEntry> = emptyList(),
+    val profile: Profile = Profile()
 )
 
 class HomeViewModel(private val repo: BlackCallRepository) : ViewModel() {
 
-    val state: StateFlow<HomeUiState> = combine(repo.settings, repo.callLog) { settings, log ->
+    val state: StateFlow<HomeUiState> = combine(repo.settings, repo.callLog, repo.profile) { settings, log, profile ->
         val zone = ZoneId.systemDefault()
         val today = LocalDate.now(zone)
         val perDay = log.groupingBy { Instant.ofEpochMilli(it.timestamp).atZone(zone).toLocalDate() }.eachCount()
@@ -42,7 +44,8 @@ class HomeViewModel(private val repo: BlackCallRepository) : ViewModel() {
             total = log.size,
             last7 = counts,
             dayLabels = days.map { it.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()).take(3) },
-            recent = log.take(4)
+            recent = log.take(4),
+            profile = profile
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
 
