@@ -256,15 +256,17 @@ private fun SwipeRow(
         modifier = modifier,
         enableDismissFromStartToEnd = false,
         backgroundContent = {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(Coral.copy(alpha = 0.25f))
-                    .padding(end = 24.dp),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Icon(Icons.Rounded.Delete, null, tint = Coral)
+            if (state.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(Coral.copy(alpha = 0.25f))
+                        .padding(end = 24.dp),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    Icon(Icons.Rounded.Delete, null, tint = Coral)
+                }
             }
         },
         content = { content() }
