@@ -33,11 +33,8 @@ app has **no internet permission at all**.
 
 ## 📸 Screenshots
 
-<!-- Add screenshots to /assets and uncomment:
-<p align="center">
 <img width="1940" height="1116" alt="screenshots" src="https://github.com/user-attachments/assets/3bee64ae-08ba-4e4f-a54a-acfa5f49f2a6" />
-</p>
---><img width="300" height="650" alt="demo" src="https://github.com/user-attachments/assets/29eea4e9-1d26-482e-9188-9b9dc0f82912" />
+<img width="300" height="650" alt="demo" src="https://github.com/user-attachments/assets/29eea4e9-1d26-482e-9188-9b9dc0f82912" />
 
 *Shield (home) · Lists · Activity · Settings*
 
