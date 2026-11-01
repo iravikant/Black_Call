@@ -2,7 +2,6 @@
 
 <img width="2560" height="800" alt="banner" src="https://github.com/user-attachments/assets/5874adf2-626b-4c7c-b3b0-2d1efc267027" />
 
-<br/>
 [![Downloads](https://img.shields.io/github/downloads/iravikant/Black_Call/total?style=for-the-badge&color=22C55E)](https://github.com/iravikant/Black_Call/releases)
 [![CI](https://img.shields.io/github/actions/workflow/status/iravikant/Black_Call/ci.yml?style=for-the-badge&label=build)](https://github.com/iravikant/Black_Call/actions/workflows/ci.yml)
 ![Android 10+](https://img.shields.io/badge/Android-10%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)
