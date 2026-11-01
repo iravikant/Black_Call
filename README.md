@@ -4,14 +4,14 @@
 
 <br/>
 
-[![Latest release](https://img.shields.io/github/v/release/OWNER/REPO?style=for-the-badge&color=14B8A6&logo=github)](https://github.com/OWNER/REPO/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/OWNER/REPO/total?style=for-the-badge&color=22C55E)](https://github.com/OWNER/REPO/releases)
-[![CI](https://img.shields.io/github/actions/workflow/status/OWNER/REPO/ci.yml?style=for-the-badge&label=build)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/iravikant/Black_Call?style=for-the-badge&color=14B8A6&logo=github)](https://github.com/iravikant/Black_Call/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/iravikant/Black_Call/total?style=for-the-badge&color=22C55E)](https://github.com/iravikant/Black_Call/releases)
+[![CI](https://img.shields.io/github/actions/workflow/status/iravikant/Black_Call/ci.yml?style=for-the-badge&label=build)](https://github.com/iravikant/Black_Call/actions/workflows/ci.yml)
 ![Android 10+](https://img.shields.io/badge/Android-10%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.0-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
 ![Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)
 
-### **[⬇️ Download the latest APK](https://github.com/OWNER/REPO/releases/latest)**
+### **[⬇️ Download the latest APK](https://github.com/iravikant/Black_Call/releases/latest)**
 
 </div>
 
@@ -48,12 +48,12 @@ app has **no internet permission at all**.
 
 ## 📲 Install
 
-1. Open the **[Releases](https://github.com/OWNER/REPO/releases/latest)** page.
+1. Open the **[Releases](https://github.com/iravikant/Black_Call/releases/latest)** page.
 2. Download `Black-Call-vX.Y.Z.apk` on your phone.
 3. Tap it and allow **Install unknown apps** if Android asks.
 4. Open Black Call and grant the **Call screening** role (the onboarding wizard walks you through it).
 
-> Every release also ships an `.aab`, a `SHA256SUMS.txt` and a signed build-provenance attestation.
+> Every release also ships an `.aab` and a `SHA256SUMS.txt`.
 > Verify a download with `sha256sum -c SHA256SUMS.txt`.
 
 ## 🧭 How a call is decided
@@ -83,8 +83,8 @@ di/           AppContainer (manual DI; the service reads an in-memory rule snaps
 ## 🔨 Build from source
 
 ```bash
-git clone https://github.com/OWNER/REPO.git
-cd REPO
+git clone https://github.com/iravikant/Black_Call.git
+cd Black_Call
 ./gradlew testDebugUnitTest      # run unit tests
 ./gradlew assembleDebug          # app/build/outputs/apk/debug/
 ```
