@@ -106,8 +106,11 @@ The `Release` workflow then:
 1. derives `versionName` (`1.1.0`) and `versionCode` (`10100`) from the tag,
 2. runs unit tests,
 3. builds a **signed APK and AAB**,
-4. generates `SHA256SUMS.txt` and a build-provenance attestation,
+4. generates `SHA256SUMS.txt`,
 5. publishes a **GitHub Release** with auto-generated notes and all files attached.
+
+If a release build succeeds but publishing fails, use the `Release` workflow's **Run workflow**
+option on the `main` branch and enter the existing version tag to retry publishing it.
 
 One-time setup: create a keystore (`./scripts/make-keystore.sh`) and add these repository secrets
 (*Settings → Secrets and variables → Actions*): `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
