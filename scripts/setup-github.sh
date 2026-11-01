@@ -27,10 +27,10 @@ if [ -n "$KS" ]; then
   read -rsp "Keystore password: " KSPASS; echo
   read -rsp "Key password (Enter = same): " KPASS; echo
   KPASS="${KPASS:-$KSPASS}"
-  base64 -w0 "$KS" 2>/dev/null | gh secret set KEYSTORE_BASE64 -R "$REPO" || base64 "$KS" | gh secret set KEYSTORE_BASE64 -R "$REPO"
-  gh secret set KEYSTORE_PASSWORD -R "$REPO" --body "$KSPASS"
-  gh secret set KEY_ALIAS         -R "$REPO" --body "$ALIAS"
-  gh secret set KEY_PASSWORD      -R "$REPO" --body "$KPASS"
+  base64 "$KS" | tr -d '\r\n' | gh secret set KEYSTORE_BASE64 -R "$REPO"
+  printf '%s' "$KSPASS" | gh secret set KEYSTORE_PASSWORD -R "$REPO"
+  printf '%s' "$ALIAS"  | gh secret set KEY_ALIAS         -R "$REPO"
+  printf '%s' "$KPASS"  | gh secret set KEY_PASSWORD      -R "$REPO"
   echo "Signing secrets set."
 fi
 echo "Done. Commit the README change, push, then run ./scripts/release.sh 1.0.0"
