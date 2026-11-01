@@ -5,6 +5,11 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+// Version comes from the git tag in CI (-PappVersionName=1.2.3 -PappVersionCode=10203).
+// Local builds fall back to the defaults below.
+val appVersionName: String = (findProperty("appVersionName") as String?) ?: "1.0"
+val appVersionCode: Int = ((findProperty("appVersionCode") as String?) ?: "1").toInt()
+
 android {
     namespace = "com.blackcall"
     compileSdk = 36
@@ -14,12 +19,27 @@ android {
         // CallScreeningService + RoleManager (ROLE_CALL_SCREENING) need API 29+
         minSdk = 29
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
+    }
+
+    // Release signing. Reads KEYSTORE_FILE / KEYSTORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD from the
+    // environment (set by the GitHub release workflow). Without them the release build is unsigned.
+    signingConfigs {
+        create("release") {
+            val keystorePath = System.getenv("KEYSTORE_FILE")
+            if (!keystorePath.isNullOrBlank() && file(keystorePath).exists()) {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile != null }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

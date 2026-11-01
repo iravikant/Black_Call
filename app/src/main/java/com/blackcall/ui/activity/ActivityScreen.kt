@@ -18,8 +18,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.DeleteSweep
-import androidx.compose.material.icons.rounded.History
-import androidx.compose.material.icons.rounded.VerifiedUser
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -59,7 +58,7 @@ fun ActivityScreen(
     contentPadding: PaddingValues,
     vm: ActivityViewModel = appViewModel { ActivityViewModel(it.repository) }
 ) {
-    val entries by vm.entries.collectAsStateWithLifecycle()
+    val groups by vm.groups.collectAsStateWithLifecycle()
     val total by vm.totalCount.collectAsStateWithLifecycle()
     val filter by vm.filter.collectAsStateWithLifecycle()
     val snackbar = LocalSnackbar.current
@@ -111,7 +110,7 @@ fun ActivityScreen(
             }
         }
 
-        if (entries.isEmpty()) {
+        if (groups.isEmpty()) {
             item {
                 EmptyState(
                     R.drawable.origin_svgrepo_com,
@@ -122,7 +121,7 @@ fun ActivityScreen(
             }
         }
 
-        val grouped = entries.groupBy { Format.day(it.timestamp) }
+        val grouped = groups.groupBy { Format.day(it.latest.timestamp) }
         grouped.forEach { (day, rows) ->
             item(key = "day-$day") {
                 Text(
@@ -132,10 +131,12 @@ fun ActivityScreen(
                     modifier = Modifier.padding(top = 8.dp).animateItem()
                 )
             }
-            items(rows, key = { it.id }) { entry ->
+            items(rows, key = { it.latest.id }) { group ->
+                val entry = group.latest
                 val expanded = expandedId == entry.id
                 CallLogRow(
                     entry = entry,
+                    count = group.count,
                     modifier = Modifier.animateItem(),
                     expanded = expanded,
                     onClick = { expandedId = if (expanded) null else entry.id }
@@ -144,7 +145,7 @@ fun ActivityScreen(
                         entry = entry,
                         onBlock = { vm.block(entry); say("Number added to your blocked list") },
                         onAllow = { vm.allow(entry); say("Number added to your allowed list") },
-                        onDelete = { vm.delete(entry); expandedId = null }
+                        onDelete = { vm.deleteGroup(group); expandedId = null }
                     )
                 }
             }
@@ -188,7 +189,7 @@ private fun FilterPill(text: String, selected: Boolean, onClick: () -> Unit) {
     Row(
         Modifier
             .clip(RoundedCornerShape(50))
-            .background(if (selected) BrandGradient else androidx.compose.ui.graphics.SolidColor(SubtleMid))
+            .background(if (selected) BrandGradient else SolidColor(SubtleMid))
             .clickable(role = Role.Tab, onClick = onClick)
             .padding(horizontal = 18.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically

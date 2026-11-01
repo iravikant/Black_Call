@@ -22,15 +22,34 @@ enum class LogFilter(val title: String, private val reasons: Set<BlockReason>?) 
     fun matches(reason: BlockReason) = reasons == null || reason in reasons
 }
 
+/** All blocked calls from one number, collapsed into a single row. */
+data class LogGroup(
+    val latest: CallLogEntry,   // most recent call from this number
+    val count: Int,             // how many times it was blocked
+    val ids: List<Long>         // every row in the group, for deleting
+)
+
 class ActivityViewModel(private val repo: BlackCallRepository) : ViewModel() {
 
     val filter = MutableStateFlow(LogFilter.ALL)
 
-    val entries: StateFlow<List<CallLogEntry>> = combine(repo.callLog, filter) { log, f ->
+    val groups: StateFlow<List<LogGroup>> = combine(repo.callLog, filter) { log, f ->
         log.filter { f.matches(it.reason) }
+            .groupBy { it.normalized }          // hidden numbers (empty) group together
+            .values
+            .map { rows ->
+                LogGroup(
+                    latest = rows.maxBy { it.timestamp },
+                    count = rows.size,
+                    ids = rows.map { it.id }
+                )
+            }
+            .sortedByDescending { it.latest.timestamp }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    val totalCount: StateFlow<Int> = combine(repo.callLog, filter) { log, _ -> log.size }
+    /** Total blocked calls (not groups), so the header count stays accurate. */
+    val totalCount: StateFlow<Int> = repo.callLog
+        .combine(filter) { log, _ -> log.size }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     fun setFilter(f: LogFilter) { filter.value = f }
@@ -43,8 +62,8 @@ class ActivityViewModel(private val repo: BlackCallRepository) : ViewModel() {
         viewModelScope.launch { repo.saveRule(entry.number, RuleType.ALLOW) }
     }
 
-    fun delete(entry: CallLogEntry) {
-        viewModelScope.launch { repo.deleteLog(entry.id) }
+    fun deleteGroup(group: LogGroup) {
+        viewModelScope.launch { group.ids.forEach { repo.deleteLog(it) } }
     }
 
     fun clearAll() {

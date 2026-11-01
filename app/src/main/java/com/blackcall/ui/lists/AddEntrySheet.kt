@@ -7,11 +7,16 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.provider.CallLog
 import android.provider.ContactsContract
+import android.text.format.DateUtils
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,16 +25,28 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.CallMade
+import androidx.compose.material.icons.automirrored.rounded.CallMissed
+import androidx.compose.material.icons.automirrored.rounded.CallReceived
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,58 +55,38 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
-import com.blackcall.ui.Format
+import com.blackcall.R
 import com.blackcall.ui.components.BlackCallTextField
+import com.blackcall.ui.components.EmptyState
 import com.blackcall.ui.components.GhostButton
 import com.blackcall.ui.components.GradientButton
+import com.blackcall.ui.components.SearchField
 import com.blackcall.ui.components.SegmentedControl
+import com.blackcall.ui.theme.Coral
+import com.blackcall.ui.theme.Green
 import com.blackcall.ui.theme.Hairline
 import com.blackcall.ui.theme.Surface1
+import com.blackcall.ui.theme.Teal
 import com.blackcall.ui.theme.TealBright
 import com.blackcall.ui.theme.TextPrimary
 import com.blackcall.ui.theme.TextSecondary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.automirrored.rounded.CallMade
-import androidx.compose.material.icons.automirrored.rounded.CallMissed
-import androidx.compose.material.icons.automirrored.rounded.CallReceived
-import androidx.compose.material.icons.rounded.Block
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import android.text.format.DateUtils
-import androidx.compose.foundation.layout.PaddingValues
-import com.blackcall.R
-import com.blackcall.ui.components.EmptyState
-import com.blackcall.ui.components.SearchField
-import com.blackcall.ui.theme.Coral
-import com.blackcall.ui.theme.Teal
-import com.blackcall.ui.theme.Green
+
 private const val MAX_WITH_PREFIX = 14   // starts with 0 or +  (the '+' is not counted)
 private const val MAX_PLAIN = 11         // anything else
 private const val MAX_PREFIX_RULE = 6
@@ -111,7 +108,11 @@ private fun sanitizeNumber(input: String, tab: ListTab): String {
     return if (hasPlus) "+$digits" else digits
 }
 
-private data class RecentCall(
+// ---------------------------------------------------------------------------------------------
+// Call log helpers (shared with HomeScreen)
+// ---------------------------------------------------------------------------------------------
+
+internal data class RecentCall(
     val number: String,
     val name: String,
     val date: Long,
@@ -119,7 +120,7 @@ private data class RecentCall(
     val count: Int = 1
 )
 
-private suspend fun loadRecentCalls(context: Context): List<RecentCall> =
+internal suspend fun loadRecentCalls(context: Context): List<RecentCall> =
     withContext(Dispatchers.IO) {
         val result = LinkedHashMap<String, RecentCall>()
         try {
@@ -160,10 +161,10 @@ private suspend fun loadRecentCalls(context: Context): List<RecentCall> =
         result.values.toList()
     }
 
-private data class TypeMeta(val icon: ImageVector, val label: String, val color: Color)
+internal data class TypeMeta(val icon: ImageVector, val label: String, val color: Color)
 
 @Composable
-private fun typeMeta(type: Int): TypeMeta = when (type) {
+internal fun typeMeta(type: Int): TypeMeta = when (type) {
     CallLog.Calls.OUTGOING_TYPE -> TypeMeta(Icons.AutoMirrored.Rounded.CallMade, "Outgoing", TealBright)
     CallLog.Calls.MISSED_TYPE -> TypeMeta(Icons.AutoMirrored.Rounded.CallMissed, "Missed", Coral)
     CallLog.Calls.REJECTED_TYPE -> TypeMeta(Icons.Rounded.Block, "Declined", Coral)
@@ -171,18 +172,87 @@ private fun typeMeta(type: Int): TypeMeta = when (type) {
     else -> TypeMeta(Icons.AutoMirrored.Rounded.CallReceived, "Incoming", TealBright)
 }
 
-private fun callTime(date: Long): String {
+internal fun callTime(date: Long): String {
     val now = System.currentTimeMillis()
     return if (DateUtils.isToday(date)) {
         DateUtils.getRelativeTimeSpanString(date, now, DateUtils.MINUTE_IN_MILLIS).toString()
     } else {
-        DateUtils.getRelativeTimeSpanString(date, now, DateUtils.DAY_IN_MILLIS, DateUtils.FORMAT_ABBREV_RELATIVE).toString()
+        DateUtils.getRelativeTimeSpanString(
+            date, now, DateUtils.DAY_IN_MILLIS, DateUtils.FORMAT_ABBREV_RELATIVE
+        ).toString()
     }
 }
 
-private fun initialsOf(name: String): String =
+internal fun initialsOf(name: String): String =
     name.trim().split(' ').filter { it.isNotBlank() }.take(2)
         .mapNotNull { it.firstOrNull()?.uppercaseChar() }.joinToString("")
+
+@Composable
+internal fun CallRow(call: RecentCall, onClick: (() -> Unit)? = null) {
+    val meta = typeMeta(call.type)
+    val initials = initialsOf(call.name)
+
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            Modifier
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(Brush.linearGradient(listOf(Teal.copy(alpha = 0.30f), Green.copy(alpha = 0.16f)))),
+            contentAlignment = Alignment.Center
+        ) {
+            if (initials.isNotEmpty()) {
+                Text(initials, style = MaterialTheme.typography.titleSmall, color = TealBright)
+            } else {
+                Icon(Icons.Rounded.Person, null, tint = TealBright, modifier = Modifier.size(22.dp))
+            }
+        }
+
+        Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
+            Text(
+                call.name.ifBlank { call.number },
+                style = MaterialTheme.typography.titleSmall,
+                color = TextPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(meta.icon, null, tint = meta.color, modifier = Modifier.size(14.dp))
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    buildString {
+                        append(meta.label)
+                        if (call.count > 1) append(" (${call.count})")
+                        append(" · ")
+                        append(callTime(call.date))
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            if (call.name.isNotBlank()) {
+                Text(
+                    call.number,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary,
+                    maxLines = 1
+                )
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Call log picker dialog
+// ---------------------------------------------------------------------------------------------
 
 @Composable
 private fun CallLogPickerDialog(onPick: (RecentCall) -> Unit, onDismiss: () -> Unit) {
@@ -215,7 +285,6 @@ private fun CallLogPickerDialog(onPick: (RecentCall) -> Unit, onDismiss: () -> U
                 .border(1.dp, Hairline, shape)
                 .padding(top = 20.dp, bottom = 12.dp)
         ) {
-            // Header
             Row(
                 Modifier.fillMaxWidth().padding(start = 24.dp, end = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -276,68 +345,9 @@ private fun CallLogPickerDialog(onPick: (RecentCall) -> Unit, onDismiss: () -> U
     }
 }
 
-@Composable
-private fun CallRow(call: RecentCall, onClick: () -> Unit) {
-    val meta = typeMeta(call.type)
-    val initials = initialsOf(call.name)
-
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            Modifier
-                .size(44.dp)
-                .clip(CircleShape)
-                .background(Brush.linearGradient(listOf(Teal.copy(alpha = 0.30f), Green.copy(alpha = 0.16f)))),
-            contentAlignment = Alignment.Center
-        ) {
-            if (initials.isNotEmpty()) {
-                Text(initials, style = MaterialTheme.typography.titleSmall, color = TealBright)
-            } else {
-                Icon(Icons.Rounded.Person, null, tint = TealBright, modifier = Modifier.size(22.dp))
-            }
-        }
-
-        Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
-            Text(
-                call.name.ifBlank { call.number },
-                style = MaterialTheme.typography.titleSmall,
-                color = TextPrimary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(meta.icon, null, tint = meta.color, modifier = Modifier.size(14.dp))
-                Spacer(Modifier.width(4.dp))
-                Text(
-                    buildString {
-                        append(meta.label)
-                        if (call.count > 1) append(" (${call.count})")
-                        append(" · ")
-                        append(callTime(call.date))
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            if (call.name.isNotBlank()) {
-                Text(
-                    call.number,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary,
-                    maxLines = 1
-                )
-            }
-        }
-    }
-}
+// ---------------------------------------------------------------------------------------------
+// Add entry sheet
+// ---------------------------------------------------------------------------------------------
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

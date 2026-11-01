@@ -27,7 +27,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.blackcall.data.db.CallLogEntry
 import com.blackcall.data.db.signalList
@@ -45,15 +44,21 @@ import com.blackcall.ui.theme.TextPrimary
 import com.blackcall.ui.theme.TextSecondary
 import com.blackcall.ui.theme.motion
 
-/** One blocked call. Collapsed by default; when [expanded] it shows why, and any [actions]. */
+/**
+ * One blocked call, or a group of blocked calls from the same number ([count] > 1).
+ * Collapsed by default; when [expanded] it shows why, and any [actions].
+ */
 @Composable
 fun CallLogRow(
     entry: CallLogEntry,
     modifier: Modifier = Modifier,
+    count: Int = 1,
     expanded: Boolean = false,
     onClick: (() -> Unit)? = null,
     actions: (@Composable ColumnScope.() -> Unit)? = null
 ) {
+    val title = PhoneNumbers.display(entry.number) + if (count > 1) " ($count)" else ""
+
     GlassCard(
         modifier = modifier.animateContentSize(tween(280, easing = FastOutSlowInEasing)),
         onClick = onClick,
@@ -63,7 +68,7 @@ fun CallLogRow(
             IconBadge(entry.reason.icon())
             Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                 Text(
-                    PhoneNumbers.display(entry.number),
+                    title,
                     style = MaterialTheme.typography.titleSmall,
                     color = TextPrimary
                 )

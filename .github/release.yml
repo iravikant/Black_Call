@@ -1,0 +1,18 @@
+# Controls the categories in auto-generated release notes.
+changelog:
+  exclude:
+    labels: [skip-changelog]
+    authors: [dependabot]
+  categories:
+    - title: "✨ New features"
+      labels: [feature, enhancement]
+    - title: "🐞 Bug fixes"
+      labels: [bug, fix]
+    - title: "🎨 UI / design"
+      labels: [ui, design]
+    - title: "🔒 Privacy & security"
+      labels: [security, privacy]
+    - title: "🧰 Maintenance"
+      labels: [chore, dependencies, ci]
+    - title: "Other changes"
+      labels: ["*"]

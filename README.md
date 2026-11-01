@@ -1,46 +1,136 @@
-# Black Call
+<div align="center">
 
-On-device call blocker for Android 10+, built with Jetpack Compose. Uses Android's
-`CallScreeningService`, so calls are stopped before the phone rings. No internet permission.
+<img src="assets/banner.svg" alt="Black Call banner" width="100%"/>
 
-## What's inside
+<br/>
 
-| Area | Details |
+[![Latest release](https://img.shields.io/github/v/release/OWNER/REPO?style=for-the-badge&color=14B8A6&logo=github)](https://github.com/OWNER/REPO/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/OWNER/REPO/total?style=for-the-badge&color=22C55E)](https://github.com/OWNER/REPO/releases)
+[![CI](https://img.shields.io/github/actions/workflow/status/OWNER/REPO/ci.yml?style=for-the-badge&label=build)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
+![Android 10+](https://img.shields.io/badge/Android-10%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.0-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
+![Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)
+
+### **[⬇️ Download the latest APK](https://github.com/OWNER/REPO/releases/latest)**
+
+</div>
+
+---
+
+## ✨ Why Black Call?
+
+Most call blockers upload your call history to a server. **Black Call never leaves your phone.**
+It uses Android's official `CallScreeningService`, so unwanted calls are stopped *before the phone rings*, and the
+app has **no internet permission at all**.
+
+| | |
 |---|---|
-| UI | 100% Jetpack Compose + Material 3, dark black/teal/green/white gradient theme |
-| Screens | Onboarding wizard, Shield (home), Lists, Activity, Settings |
-| Filters | Blocked list, allowed list, number prefixes (`140`, `+92`), unknown, hidden, spoofed (STIR/SHAKEN), spam score, contacts-only, quiet hours |
-| Block action | Reject, or silence (call stays as a missed call) |
-| Transparency | Every block is logged with its reason, spam score and signals |
-| Backup | CSV export/import of lists |
-| Permissions | Call screening role, Contacts, Notifications: guided, with permanent-denial detection and settings fallbacks |
+| 🛡️ **Blocks before ringing** | Built on the system call-screening role, not hacks or overlays |
+| 🔒 **100% on-device** | No internet permission, no accounts, no analytics |
+| 🧠 **Smart spam scoring** | Heuristics tuned for Indian numbering (e.g. the `140` telemarketing series) |
+| 🎯 **Flexible rules** | Blocked list, allowed list, prefixes (`140`, `+92`), contacts-only, quiet hours |
+| 🕵️ **Spoof detection** | Flags unverified / spoofed callers using STIR/SHAKEN signals |
+| 📜 **Fully transparent** | Every block is logged with its reason, spam score and signals |
+| 💾 **Backup** | Export / import your lists as CSV |
+| 🎨 **Gorgeous UI** | Jetpack Compose + Material 3 with a black / teal / green gradient theme |
 
-## Architecture
+## 📸 Screenshots
+
+<!-- Add screenshots to /assets and uncomment:
+<p align="center">
+  <img src="assets/shield.png" width="23%"/>
+  <img src="assets/lists.png" width="23%"/>
+  <img src="assets/activity.png" width="23%"/>
+  <img src="assets/settings.png" width="23%"/>
+</p>
+-->
+*Shield (home) · Lists · Activity · Settings*
+
+## 📲 Install
+
+1. Open the **[Releases](https://github.com/OWNER/REPO/releases/latest)** page.
+2. Download `Black-Call-vX.Y.Z.apk` on your phone.
+3. Tap it and allow **Install unknown apps** if Android asks.
+4. Open Black Call and grant the **Call screening** role (the onboarding wizard walks you through it).
+
+> Every release also ships an `.aab`, a `SHA256SUMS.txt` and a signed build-provenance attestation.
+> Verify a download with `sha256sum -c SHA256SUMS.txt`.
+
+## 🧭 How a call is decided
+
+First match wins:
 
 ```
-domain/      Pure Kotlin: BlockEngine, SpamScorer, PhoneNumbers, CsvBackup  (unit tested)
-data/        Room (rules + call log), DataStore (settings), repository, contacts lookup
-service/     BlackCallScreeningService, BlockNotifier
-permissions/ PermissionController (state machine + launchers)
-ui/          theme, components, navigation, one package per screen (ViewModel + Screen)
-di/          AppContainer (manual DI; the service reads an in-memory rule snapshot)
+emergency → protection off → allowed list → blocked list → prefix rule → saved contact
+→ quiet hours → contacts-only → hidden number → spoofed → unknown → spam score
 ```
 
-Decision order (first match wins): emergency → protection off → allowed list → blocked list →
-prefix rule → saved contact → quiet hours → contacts-only → hidden → spoofed → unknown → spam score.
+Blocked calls are either **rejected** or **silenced** (stay as a missed call), your choice.
 
-## Build
+## 🏗️ Architecture
 
-Open in Android Studio (AGP 8.13, JDK 11+), sync, run on a device with a SIM.
-On first launch grant the **Call screening** role. To test, call the device from another
-phone while the number is on the blocked list.
+```
+domain/       Pure Kotlin: BlockEngine, SpamScorer, PhoneNumbers, CsvBackup   (unit tested)
+data/         Room (rules + call log), DataStore (settings), repository, contacts lookup
+service/      BlackCallScreeningService, BlockNotifier
+permissions/  PermissionController (state machine + launchers)
+ui/           theme, components, navigation, one package per screen (ViewModel + Screen)
+di/           AppContainer (manual DI; the service reads an in-memory rule snapshot)
+```
 
-Unit tests (`app/src/test`) cover the engine, scorer, number handling and CSV backup.
+**Stack:** Kotlin · Jetpack Compose · Material 3 · Room · DataStore · Coroutines/Flow · Navigation Compose
 
-## Notes for upgraders from v1
+## 🔨 Build from source
 
-- The old AppLock module, Lottie animations, TFLite dependency and ~60 SVG drawables were removed.
-- The old `MyInCallService` and the **default dialer** role request were removed: becoming the
-  default dialer without an in-call UI would break the phone for users.
-- Database is new (`blackcall.db`); v1 data is not migrated.
-- Spam scoring is tuned for Indian numbering (140 series). Adjust `SpamScorer` for other regions.
+```bash
+git clone https://github.com/OWNER/REPO.git
+cd REPO
+./gradlew testDebugUnitTest      # run unit tests
+./gradlew assembleDebug          # app/build/outputs/apk/debug/
+```
+
+Requires JDK 17 and Android Studio (AGP 8.13). Run on a device with a SIM, then call it from another phone
+while that number is on the blocked list.
+
+## 🚀 Releasing (maintainers)
+
+Releases are fully automated: **pushing a tag builds, signs and publishes everything.**
+
+```bash
+./scripts/release.sh 1.1.0          # bumps nothing locally, creates + pushes tag v1.1.0
+./scripts/release.sh 1.2.0-beta.1   # pre-release
+```
+
+The `Release` workflow then:
+
+1. derives `versionName` (`1.1.0`) and `versionCode` (`10100`) from the tag,
+2. runs unit tests,
+3. builds a **signed APK and AAB**,
+4. generates `SHA256SUMS.txt` and a build-provenance attestation,
+5. publishes a **GitHub Release** with auto-generated notes and all files attached.
+
+One-time setup: create a keystore (`./scripts/make-keystore.sh`) and add these repository secrets
+(*Settings → Secrets and variables → Actions*): `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
+`./scripts/setup-github.sh` can set them for you.
+
+> ⚠️ Back up your keystore. Updates must be signed with the same key.
+
+## 🔐 Privacy
+
+- No `INTERNET` permission, so nothing can be sent off-device.
+- Permissions used: contacts (to allow saved contacts), call log (screening/activity), notifications (block alerts).
+- All rules and logs live in a local Room database.
+
+## 🗺️ Notes
+
+- Spam scoring is tuned for Indian numbering. Adjust `SpamScorer` for other regions.
+- The app deliberately does **not** request the default-dialer role; that would break the phone without an in-call UI.
+
+## 🤝 Contributing
+
+Issues and PRs are welcome. Run `./gradlew testDebugUnitTest` before opening a PR. Use the
+`feature`, `bug`, `ui`, `security` labels so release notes categorise your change.
+
+---
+
+<div align="center">Made with 🖤 for quieter phones.</div>
