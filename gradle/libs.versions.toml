@@ -4,7 +4,7 @@ kotlin = "2.0.21"
 ksp = "2.0.21-1.0.28"
 
 coreKtx = "1.17.0"
-coreSplashscreen = "1.0.1"
+coreSplashscreen = "1.2.0"
 activityCompose = "1.12.2"
 composeBom = "2025.09.00"
 lifecycle = "2.9.4"
